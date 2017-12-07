@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use std::env;
+use std::collections::BTreeMap;
 
 fn spiral_for_target_help(target: i32) -> (i32, i32)
 {
@@ -70,6 +71,92 @@ fn spiral_for_target_help(target: i32) -> (i32, i32)
     (x, y)
 }
 
+fn update_spiral(spiral: &mut BTreeMap<(i32, i32), i32>, ind: (i32, i32)) -> i32
+{
+    let neighbors = vec![(-1, -1), (0, -1), (1, -1),
+                         (-1, 0),           (1, 0),
+                         (-1, 1),  (0, 1),  (1, 1)];
+
+    let mut sum = 0;
+    for n in neighbors
+    {
+        let local_neighbor = (n.0 + ind.0, n.1 + ind.1);
+        if spiral.contains_key(&local_neighbor)
+        {
+            sum += spiral[&local_neighbor];
+        }
+    }
+    spiral.insert(ind, sum);
+    sum
+}
+
+fn next_larger(input: i32) -> i32
+{
+    let mut spiral = BTreeMap::new();
+
+    spiral.insert((0, 0), 1);
+    let mut ind = (1, 0);
+    let mut spiral_index = 1;
+    loop 
+    {
+        let edge_length = spiral_index * 2 + 1;
+
+        let ret = update_spiral(&mut spiral, ind);
+        if ret > input
+        {
+            return ret;
+        }
+
+        let up_count = edge_length - 2;
+        for _ in 0..up_count
+        {
+            ind = (ind.0, ind.1 - 1);
+            let ret = update_spiral(&mut spiral, ind);
+            if ret > input
+            {
+                return ret;
+            }
+        }
+
+        let left_count = edge_length - 1;
+        for _ in 0..left_count
+        {
+            ind = (ind.0 - 1, ind.1);
+            update_spiral(&mut spiral, ind);
+            if ret > input
+            {
+                return ret;
+            }
+        }
+
+        let down_count = edge_length - 1;
+        for _ in 0..down_count
+        {
+            ind = (ind.0, ind.1 + 1);
+            update_spiral(&mut spiral, ind);
+            if ret > input
+            {
+                return ret;
+            }
+        }
+
+        let right_count = edge_length - 1;
+        for _ in 0..right_count
+        {
+            ind = (ind.0 + 1, ind.1);
+            update_spiral(&mut spiral, ind);
+            if ret > input
+            {
+                return ret;
+            }
+        }
+
+        ind = (ind.0 + 1, ind.1);
+        spiral_index += 1;
+    }
+    -1
+}
+
 
 fn carry_distance(address: i32) -> i32
 {
@@ -87,6 +174,8 @@ fn main()
     let input_num = i32::from_str(&args[1]).unwrap();
     let carry_dist = carry_distance(input_num);
     println!("Carry Distance {}", carry_dist);
+    let next_larger = next_larger(input_num);
+    println!("Next Larger {}", next_larger);
 }
 
 #[cfg(test)]
